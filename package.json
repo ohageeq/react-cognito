@@ -17,8 +17,8 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "dotenv -e .env.local react-scripts start",
+    "build": "dotenv -e .env.local react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -39,5 +39,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cognito-identity": "^3.46.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.46.0",
+    "@aws-sdk/credential-provider-cognito-identity": "^3.46.0",
+    "dotenv-cli": "^4.1.1"
   }
 }

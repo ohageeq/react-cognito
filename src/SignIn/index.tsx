@@ -1,6 +1,14 @@
 import { SubmitHandler, useForm } from "react-hook-form";
 import Layout from "../Layout";
-import { Box, Button, Grid, Link, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Grid,
+  Link,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import React, { useState } from "react";
 import { login } from "../Authentication/api";
@@ -36,9 +44,15 @@ const SignIn = () => {
         <Box component="form" noValidate sx={{ mt: 3 }}>
           <Grid container spacing={2}>
             {authenticationResult && (
-              <Typography>{`result:${JSON.stringify(
-                authenticationResult
-              )}`}</Typography>
+              <Container maxWidth={"md"}>
+                <Typography
+                  style={{ wordWrap: "break-word" }}
+                >{`${JSON.stringify(
+                  authenticationResult,
+                  null,
+                  2
+                )}`}</Typography>
+              </Container>
             )}
             <Grid item xs={12}>
               <TextField
@@ -46,7 +60,6 @@ const SignIn = () => {
                 fullWidth
                 id="email"
                 label="Email Address"
-                autoComplete="email"
                 {...register("email")}
               />
             </Grid>
@@ -71,11 +84,13 @@ const SignIn = () => {
           >
             Sign In
           </Button>
-          <Grid container justifyContent="flex-end">
+          <Grid container justifyContent="flex-end" direction={"column"}>
             <Grid item>
               <RouterLink to={"/signup"}>
                 <Link variant="body2">Register account? Sign up</Link>
               </RouterLink>
+            </Grid>
+            <Grid item>
               <RouterLink to={"/sso"}>
                 <Link variant="body2">SSO login</Link>
               </RouterLink>

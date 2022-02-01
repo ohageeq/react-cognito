@@ -1,6 +1,13 @@
 import { SubmitHandler, useForm } from "react-hook-form";
 import Layout from "../Layout";
-import { Box, Button, Grid, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Grid,
+  TextField,
+  Typography,
+} from "@mui/material";
 import React, { useState } from "react";
 import { ssoLogin, ssoLoginConfirm } from "../Authentication/api";
 import { AuthenticationResultType } from "@aws-sdk/client-cognito-identity-provider";
@@ -41,14 +48,20 @@ const SignIn = () => {
         }}
       >
         <Typography component="h1" variant="h5">
-          Sign in
+          SSO passwordless login
         </Typography>
         <Box component="form" noValidate sx={{ mt: 3 }}>
           <Grid container spacing={2}>
             {authenticationResult && (
-              <Typography>{`result:${JSON.stringify(
-                authenticationResult
-              )}`}</Typography>
+              <Container maxWidth={"md"}>
+                <Typography
+                  style={{ wordWrap: "break-word" }}
+                >{`${JSON.stringify(
+                  authenticationResult,
+                  null,
+                  2
+                )}`}</Typography>
+              </Container>
             )}
             <Grid item xs={12}>
               <TextField
@@ -57,7 +70,6 @@ const SignIn = () => {
                 fullWidth
                 id="email"
                 label="Email Address"
-                autoComplete="email"
                 {...register("email")}
               />
             </Grid>
@@ -81,7 +93,7 @@ const SignIn = () => {
             sx={{ mt: 3, mb: 2 }}
             onClick={handleSubmit(confirmMode ? onConfirm : onSubmit)}
           >
-            Sign In
+            Send
           </Button>
         </Box>
       </Box>

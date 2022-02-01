@@ -1,9 +1,18 @@
 import React, { useState } from "react";
 import Layout from "../Layout";
-import { Box, Button, Grid, Link, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Grid,
+  Link,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { Link as RouterLink } from "react-router-dom";
-import { signup, signupConfirm } from "../Authentication/api";
+import { login, signup, signupConfirm } from "../Authentication/api";
+import { AuthenticationResultType } from "@aws-sdk/client-cognito-identity-provider";
 
 type SignUpInput = {
   email: string;
@@ -11,19 +20,29 @@ type SignUpInput = {
   verificationCode?: string;
 };
 
+type Props = {
+  ConfirmMode: boolean;
+  AuthenticationResult?: AuthenticationResultType;
+};
+
 const SingUp = () => {
   const { register, handleSubmit } = useForm<SignUpInput>();
-  const [confirmMode, setConfirmMode] = useState(false);
+  const [props, setProps] = useState<Props>({
+    ConfirmMode: false,
+    AuthenticationResult: undefined,
+  });
   const onSubmit: SubmitHandler<SignUpInput> = async (data) => {
-    signup(data);
-    setConfirmMode(true);
+    await signup(data);
+    setProps({ ConfirmMode: true });
   };
 
   const onConfirm: SubmitHandler<SignUpInput> = async (data) => {
-    signupConfirm({
+    await signupConfirm({
       email: data.email,
       verificationCode: data.verificationCode!,
     });
+    const response = await login(data);
+    setProps({ ...props, AuthenticationResult: response.AuthenticationResult });
   };
 
   return (
@@ -41,20 +60,30 @@ const SingUp = () => {
         </Typography>
         <Box component="form" noValidate sx={{ mt: 3 }}>
           <Grid container spacing={2}>
+            {props.AuthenticationResult && (
+              <Container maxWidth={"md"}>
+                <Typography
+                  style={{ wordWrap: "break-word" }}
+                >{`${JSON.stringify(
+                  props.AuthenticationResult,
+                  null,
+                  2
+                )}`}</Typography>
+              </Container>
+            )}
             <Grid item xs={12}>
               <TextField
-                disabled={confirmMode}
+                disabled={props.ConfirmMode}
                 required
                 fullWidth
                 id="email"
                 label="Email Address"
-                autoComplete="email"
                 {...register("email")}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                disabled={confirmMode}
+                disabled={props.ConfirmMode}
                 required
                 fullWidth
                 label="Password"
@@ -64,7 +93,7 @@ const SingUp = () => {
                 {...register("password")}
               />
             </Grid>
-            {confirmMode && (
+            {props.ConfirmMode && (
               <Grid item xs={12}>
                 <TextField
                   required
@@ -81,9 +110,9 @@ const SingUp = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            onClick={handleSubmit(confirmMode ? onConfirm : onSubmit)}
+            onClick={handleSubmit(props.ConfirmMode ? onConfirm : onSubmit)}
           >
-            {confirmMode ? "Send verification code" : "Sign Up"}
+            {props.ConfirmMode ? "Send verification code" : "Sign Up"}
           </Button>
           <Grid container justifyContent="flex-end">
             <Grid item>

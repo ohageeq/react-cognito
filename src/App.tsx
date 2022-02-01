@@ -4,6 +4,7 @@ import { Routes } from "react-router";
 import SignUp from "./SignUp";
 import SignIn from "./SignIn";
 import Home from "./Home";
+import SSO from "./SSO";
 
 function App() {
   return (
@@ -11,7 +12,7 @@ function App() {
       <Route path={"/"} element={<Home />} />
       <Route path={"/signup"} element={<SignUp />} />
       <Route path={"/signin"} element={<SignIn />} />
-      <Route path={"/sso"} element={<SignIn />} />
+      <Route path={"/sso"} element={<SSO />} />
     </Routes>
   );
 }

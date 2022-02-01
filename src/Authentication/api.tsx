@@ -1,4 +1,4 @@
-import cognito from "../cognito";
+import cognito, { getTimestampString } from "./cognito";
 import {
   AuthFlowType,
   ChallengeNameType,
@@ -7,11 +7,6 @@ import {
   RespondToAuthChallengeCommand,
   SignUpCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
-import { format } from "date-fns";
-import enUS from "date-fns/locale/en-US";
-
-const dateFormat = (date: Date) =>
-  format(date, "EEE MMM d HH:mm:ss 'UTC' yyyy", { locale: enUS });
 
 const signup = async ({
   email,
@@ -25,7 +20,6 @@ const signup = async ({
       ClientId: cognito.clientId,
       Username: email,
       Password: password,
-      UserAttributes: [{ Name: "mode", Value: "password" }],
     })
   );
 };
@@ -46,7 +40,7 @@ const signupConfirm = async ({
   );
 };
 
-const login = async ({
+const initiate = async ({
   email,
   password,
 }: {
@@ -67,8 +61,33 @@ const login = async ({
       },
     })
   );
+  return response.ChallengeParameters!.USERNAME;
+};
 
-  const timestamp = dateFormat(new Date());
+const login = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}) => {
+  const username = await initiate({ email, password });
+  const challenge = await cognito.userPool.getClientChallenge({
+    username: username,
+    password: password,
+  });
+  const response = await cognito.client.send(
+    new InitiateAuthCommand({
+      ClientId: cognito.clientId,
+      AuthFlow: AuthFlowType.USER_SRP_AUTH,
+      AuthParameters: {
+        USERNAME: username,
+        SRP_A: challenge.calculateA().toString("hex"),
+      },
+    })
+  );
+
+  const timestamp = getTimestampString(new Date());
   const session = challenge.getSession(
     response.ChallengeParameters!.SRP_B,
     response.ChallengeParameters!.SALT
@@ -80,13 +99,13 @@ const login = async ({
   return await cognito.client.send(
     new RespondToAuthChallengeCommand({
       ClientId: cognito.clientId,
-      ChallengeName: ChallengeNameType.PASSWORD_VERIFIER,
-      Session: response.Session,
+      ChallengeName: response.ChallengeName,
       ChallengeResponses: {
-        ...response.ChallengeParameters,
         TIMESTAMP: timestamp,
         PASSWORD_CLAIM_SIGNATURE: sig,
         PASSWORD_CLAIM_SECRET_BLOCK: response.ChallengeParameters!.SECRET_BLOCK,
+        USERNAME: username,
+        USER_ID_FOR_SRP: response.ChallengeParameters!.USER_ID_FOR_SRP,
       },
     })
   );
@@ -116,7 +135,7 @@ const ssoLoginConfirm = async ({
   return await cognito.client.send(
     new RespondToAuthChallengeCommand({
       ClientId: cognito.clientId,
-      ChallengeName: ChallengeNameType.PASSWORD_VERIFIER,
+      ChallengeName: ChallengeNameType.CUSTOM_CHALLENGE,
       Session: session,
       ChallengeResponses: {
         USERNAME: email,
